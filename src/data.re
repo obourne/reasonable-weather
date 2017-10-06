@@ -35,7 +35,7 @@ type weatherItem = {dt: int, main: weatherItemMain, dt_txt: string};
 
 type city = {name: string, country: string};
 
-type weatherForecast = {list: array weatherItem, city};
+type weatherForecast = {entries: array weatherItem, city};
 
 let parseWeatherItemMain json :weatherItemMain =>
   Json.{
@@ -59,7 +59,7 @@ let parseCity json :city =>
 
 let parseWeatherForecast json :weatherForecast =>
   Json.{
-    list: json |> Decode.field "list" (Decode.array parseWeatherItem),
+    entries: json |> Decode.field "list" (Decode.array parseWeatherItem),
     city: json |> Decode.field "city" parseCity
   };
 

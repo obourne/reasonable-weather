@@ -2,7 +2,11 @@
 
 open Bs_fetch;
 
-type state = {forecast: option Data.weatherForecast};
+open Data;
+
+let strEl = ReasonReact.stringToElement;
+
+let arrEl = ReasonReact.arrayToElement;
 
 let makeForecastUrl place =>
   "https://api.openweathermap.org/data/2.5/forecast?q=" ^
@@ -19,39 +23,81 @@ let fetchWeather place callback =>
     ) |> ignore
   );
 
+let getTargetValue event => (ReactDOMRe.domElementToObj (ReactEventRe.Form.target event))##value;
+
+type state = {forecast: option Data.weatherForecast, place: option string};
+
 type action =
+  | UpdatePlace string
   | ForecastResponse Data.weatherForecast;
 
 let component = ReasonReact.reducerComponent "App";
 
 let make _children => {
   ...component,
-  initialState: fun () => ({forecast: None}: state),
+  initialState: fun () => ({forecast: None, place: None}: state),
   reducer: fun action state =>
     switch action {
-    | ForecastResponse forecast => ReasonReact.Update {forecast: Some forecast}
+    | ForecastResponse forecast => ReasonReact.Update {...state, forecast: Some forecast}
+    | UpdatePlace place => ReasonReact.Update {...state, place: Some place}
     },
-  didMount: fun self => {
+  didMount: fun _self => {
     Js.log "Component mounted";
-    fetchWeather "London" (self.reduce (fun forecast => ForecastResponse forecast));
     ReasonReact.NoUpdate
   },
-  render: fun {state} =>
-    <div className="App">
-      <div className="App-header">
-        <h2> (ReasonReact.stringToElement "Reasonable Weather") </h2>
-      </div>
-      <p className="App-intro">
+  render: fun self => {
+    let entries =
+      switch self.state.forecast {
+      | Some x => x.entries
+      | None => [||]
+      };
+    let listItems =
+      Array.map
         (
-          ReasonReact.stringToElement (
-            "status: " ^ (
-              switch state.forecast {
-              | Some _ => "Got it!"
-              | None => "Waiting..."
+          fun item =>
+            <li> (strEl (item.dt_txt ^ " - " ^ string_of_float item.main.temp ^ " degrees")) </li>
+        )
+        entries;
+    <div className="App">
+      <div className="App-header"> <h2> (strEl "Reasonable Weather") </h2> </div>
+      <div className="App-content">
+        <h3>
+          (
+            strEl (
+              switch self.state.forecast {
+              | Some forecast =>
+                "Showing results for: " ^ forecast.city.name ^ ", " ^ forecast.city.country
+              | None => "Search for a location"
               }
             )
           )
+        </h3>
+        <p>
+          <input
+            className="App-input"
+            onInput=(
+              self.reduce (
+                fun e => {
+                  let place = getTargetValue e;
+                  if (String.length place > 3) {
+                    fetchWeather place (self.reduce (fun forecast => ForecastResponse forecast));
+                    UpdatePlace place
+                  } else {
+                    UpdatePlace place
+                  }
+                }
+              )
+            )
+          />
+        </p>
+        (
+          if (Array.length entries > 0) {
+            <ul className="App-list"> (arrEl listItems) </ul>
+          } else {
+            ReasonReact.nullElement
+          }
         )
-      </p>
+      </div>
     </div>
+  }
 };

@@ -1,13 +1,29 @@
-.App {
-  text-align: center;
+.App-content {
+  padding: 20px 60px;
 }
 
 .App-header {
   background-color: #222;
-  padding: 20px;
+  padding: 20px 60px;
   color: white;
 }
 
 .App-intro {
   font-size: large;
+}
+.App-input {
+  width: 20em;
+  font-size: 24px;
+  padding: 5px 10px;
+  border: 1px grey solid;
+}
+.App-list {
+  text-align: left;
+  font-size: 16px;
+  padding: 20px 0;
+  list-style: none;
+}
+
+.App-list li {
+  padding: 5px 0;  
 }
